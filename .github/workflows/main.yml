@@ -22,18 +22,13 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Create Simple Project
+    - name: Create Working Project
       run: |
-        # 1. 创建最简单的项目结构
+        # 1. 创建项目结构
         mkdir -p app/src/main/java/com/example/chianiuprinter
-        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res
         
-        # 2. 创建最简单的build.gradle
-        cat > build.gradle << 'EOF'
-        // 空文件 - 不需要根项目构建
-        EOF
-        
-        # 3. 创建settings.gradle
+        # 2. 创建settings.gradle（关键！）
         cat > settings.gradle << 'EOF'
         pluginManagement {
             repositories {
@@ -41,7 +36,11 @@ jobs:
                 mavenCentral()
                 gradlePluginPortal()
             }
+            plugins {
+                id 'com.android.application' version '8.1.0'
+            }
         }
+        
         dependencyResolutionManagement {
             repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
             repositories {
@@ -54,11 +53,13 @@ jobs:
         include ':app'
         EOF
         
-        # 4. 创建app/build.gradle
+        # 3. 创建app/build.gradle（带版本号）
         cat > app/build.gradle << 'EOF'
         plugins {
-            id 'com.android.application'
+            id 'com.android.application' version '8.1.0' apply false
         }
+        
+        apply plugin: 'com.android.application'
         
         android {
             namespace 'com.example.chianiuprinter'
@@ -83,17 +84,14 @@ jobs:
         dependencies {
             implementation 'androidx.core:core-ktx:1.10.1'
             implementation 'androidx.appcompat:appcompat:1.6.1'
-            implementation 'com.google.android.material:material:1.9.0'
         }
         EOF
         
-        # 5. 创建AndroidManifest.xml
+        # 4. 创建AndroidManifest.xml
         cat > app/src/main/AndroidManifest.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android">
             <uses-permission android:name="android.permission.BLUETOOTH" />
-            <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
             
             <application
                 android:allowBackup="true"
@@ -112,7 +110,7 @@ jobs:
         </manifest>
         EOF
         
-        # 6. 创建MainActivity
+        # 5. 创建MainActivity
         cat > app/src/main/java/com/example/chianiuprinter/MainActivity.kt << 'EOF'
         package com.example.chianiuprinter
         
@@ -126,7 +124,7 @@ jobs:
         }
         EOF
         
-        # 7. 创建gradle wrapper（最简单）
+        # 6. 创建gradle wrapper
         mkdir -p gradle/wrapper
         cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
         distributionBase=GRADLE_USER_HOME
@@ -142,8 +140,8 @@ jobs:
       
     - name: Build APK
       run: |
-        # 使用gradle wrapper构建
-        ./gradlew :app:assembleDebug
+        # 使用系统gradle（最简单）
+        gradle :app:assembleDebug
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
