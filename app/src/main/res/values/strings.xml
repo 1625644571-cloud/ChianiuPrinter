@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">牵牛花打印助手</string>
+    <string name="accessibility_service_description">监听牵牛花App的收货确认操作，自动打印商品标签</string>
+    <string name="enable_accessibility_service">请开启无障碍服务</string>
+    <string name="accessibility_service_not_enabled">无障碍服务未开启，无法监听牵牛花App</string>
+    <string name="enable_bluetooth">请开启蓝牙</string>
+    <string name="bluetooth_not_enabled">蓝牙未开启，无法连接打印机</string>
+    <string name="connect_printer">连接打印机</string>
+    <string name="disconnect_printer">断开连接</string>
+    <string name="printer_connected">打印机已连接</string>
+    <string name="printer_disconnected">打印机未连接</string>
+    <string name="searching_printers">搜索打印机中...</string>
+    <string name="no_printers_found">未找到打印机</string>
+    <string name="test_print">测试打印</string>
+    <string name="print_history">打印历史</string>
+    <string name="settings">设置</string>
+    <string name="exit">退出</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+    <string name="print_success">打印成功</string>
+    <string name="print_failed">打印失败</string>
+    <string name="connecting">连接中...</string>
+    <string name="disconnecting">断开中...</string>
+    <string name="service_running">服务运行中</string>
+    <string name="service_stopped">服务已停止</string>
+    <string name="start_service">启动服务</string>
+    <string name="stop_service">停止服务</string>
+    <string name="auto_start">开机自启</string>
+    <string name="notification_channel_name">打印服务通知</string>
+    <string name="notification_channel_description">显示打印服务的运行状态</string>
+    <string name="notification_title">牵牛花打印助手</string>
+    <string name="notification_content">正在监听牵牛花App</string>
+    
+    <!-- 牵牛花App相关字符串 -->
+    <string name="chianiu_package_name">com.meituan.chianiu</string>
+    <string name="confirm_receive_button_text">确认收货</string>
+    <string name="order_number_label">收货单号</string>
+    <string name="product_name_label">商品名称</string>
+    <string name="storage_location_label">入库库位</string>
+    <string name="quantity_label">数量</string>
+    <string name="print_time_label">打印时间</string>
+    
+    <!-- 错误信息 -->
+    <string name="error_no_bluetooth">设备不支持蓝牙</string>
+    <string name="error_no_location_permission">需要位置权限来搜索蓝牙设备</string>
+    <string name="error_bluetooth_disabled">蓝牙已关闭</string>
+    <string name="error_printer_not_found">未找到德佟P1打印机</string>
+    <string name="error_connection_failed">连接打印机失败</string>
+    <string name="error_print_failed">打印失败，请检查连接</string>
+    <string name="error_no_data">没有可打印的数据</string>
+</resources>
