@@ -22,12 +22,16 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Create Minimal Gradle Setup
+    - name: Create Complete Android Project Structure
       run: |
-        # 1. 创建最简单的gradle wrapper
+        # 1. 创建完整的项目结构
+        mkdir -p app/src/main/java/com/example/chianiuprinter
+        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/res/values
+        mkdir -p app/src/main/res/xml
         mkdir -p gradle/wrapper
         
-        # 2. 创建gradle-wrapper.properties
+        # 2. 创建gradle wrapper
         cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
         distributionBase=GRADLE_USER_HOME
         distributionPath=wrapper/dists
@@ -36,14 +40,35 @@ jobs:
         zipStorePath=wrapper/dists
         EOF
         
-        # 3. 直接使用系统gradle（最简单）
+        # 3. 创建gradlew脚本
         echo "#!/bin/bash" > gradlew
         echo 'gradle "$@"' >> gradlew
         chmod +x gradlew
         
-    - name: Create Gradle Build Files
+    - name: Create All Project Files
       run: |
-        # 创建根目录build.gradle
+        # 1. 根目录settings.gradle
+        cat > settings.gradle << 'EOF'
+        pluginManagement {
+            repositories {
+                google()
+                mavenCentral()
+                gradlePluginPortal()
+            }
+        }
+        dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        
+        rootProject.name = "ChianiuPrinter"
+        include ':app'
+        EOF
+        
+        # 2. 根目录build.gradle
         cat > build.gradle << 'EOF'
         buildscript {
             repositories {
@@ -68,8 +93,7 @@ jobs:
         }
         EOF
         
-        # 创建app/build.gradle
-        mkdir -p app
+        # 3. app/build.gradle
         cat > app/build.gradle << 'EOF'
         plugins {
             id 'com.android.application'
@@ -110,11 +134,158 @@ jobs:
             implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
         }
         EOF
+        
+        # 4. AndroidManifest.xml
+        cat > app/src/main/AndroidManifest.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools">
+            
+            <!-- 蓝牙权限 -->
+            <uses-permission android:name="android.permission.BLUETOOTH" />
+            <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+            <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+            <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+            
+            <!-- 位置权限（Android 6.0+需要） -->
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+            
+            <!-- 前台服务权限 -->
+            <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+            
+            <!-- 无障碍服务权限 -->
+            <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
+            
+            <application
+                android:allowBackup="true"
+                android:icon="@mipmap/ic_launcher"
+                android:label="@string/app_name"
+                android:theme="@style/Theme.ChianiuPrinter">
+                
+                <activity
+                    android:name=".MainActivity"
+                    android:exported="true">
+                    <intent-filter>
+                        <action android:name="android.intent.action.MAIN" />
+                        <category android:name="android.intent.category.LAUNCHER" />
+                    </intent-filter>
+                </activity>
+                
+                <activity android:name=".SettingsActivity" />
+                
+                <!-- 无障碍服务 -->
+                <service
+                    android:name=".ChianiuAccessibilityService"
+                    android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+                    android:exported="true">
+                    <intent-filter>
+                        <action android:name="android.accessibilityservice.AccessibilityService" />
+                    </intent-filter>
+                    <meta-data
+                        android:name="android.accessibilityservice"
+                        android:resource="@xml/accessibility_service_config" />
+                </service>
+                
+                <!-- 前台服务 -->
+                <service
+                    android:name=".ForegroundService"
+                    android:enabled="true"
+                    android:exported="false" />
+                
+            </application>
+        </manifest>
+        EOF
+        
+        # 5. 主Activity文件
+        cat > app/src/main/java/com/example/chianiuprinter/MainActivity.kt << 'EOF'
+        package com.example.chianiuprinter
+        
+        import android.os.Bundle
+        import androidx.appcompat.app.AppCompatActivity
+        
+        class MainActivity : AppCompatActivity() {
+            override fun onCreate(savedInstanceState: Bundle?) {
+                super.onCreate(savedInstanceState)
+                setContentView(R.layout.activity_main)
+            }
+        }
+        EOF
+        
+        # 6. 布局文件
+        cat > app/src/main/res/layout/activity_main.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <androidx.constraintlayout.widget.ConstraintLayout 
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="牵牛花打印助手"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+                
+        </androidx.constraintlayout.widget.ConstraintLayout>
+        EOF
+        
+        # 7. 资源文件
+        cat > app/src/main/res/values/strings.xml << 'EOF'
+        <resources>
+            <string name="app_name">牵牛花打印助手</string>
+        </resources>
+        EOF
+        
+        cat > app/src/main/res/values/themes.xml << 'EOF'
+        <resources xmlns:tools="http://schemas.android.com/tools">
+            <style name="Theme.ChianiuPrinter" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+                <item name="colorPrimary">@color/purple_500</item>
+                <item name="colorPrimaryVariant">@color/purple_700</item>
+                <item name="colorOnPrimary">@color/white</item>
+                <item name="colorSecondary">@color/teal_200</item>
+                <item name="colorSecondaryVariant">@color/teal_700</item>
+                <item name="colorOnSecondary">@color/black</item>
+                <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+            </style>
+        </resources>
+        EOF
+        
+        cat > app/src/main/res/values/colors.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <resources>
+            <color name="purple_200">#FFBB86FC</color>
+            <color name="purple_500">#FF6200EE</color>
+            <color name="purple_700">#FF3700B3</color>
+            <color name="teal_200">#FF03DAC5</color>
+            <color name="teal_700">#FF018786</color>
+            <color name="black">#FF000000</color>
+            <color name="white">#FFFFFFFF</color>
+        </resources>
+        EOF
+        
+        # 8. 无障碍服务配置文件
+        cat > app/src/main/res/xml/accessibility_service_config.xml << 'EOF'
+        <?xml version="1.0" encoding="utf-8"?>
+        <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+            android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewClicked"
+            android:accessibilityFeedbackType="feedbackGeneric"
+            android:accessibilityFlags="flagReportViewIds|flagRetrieveInteractiveWindows"
+            android:canRetrieveWindowContent="true"
+            android:description="@string/accessibility_service_description"
+            android:notificationTimeout="100"
+            android:packageNames="com.meituan.chianiu" />
+        EOF
       
     - name: Build APK
       run: |
-        # 使用系统gradle直接构建
-        ./gradlew assembleDebug || gradle assembleDebug
+        # 构建APK
+        ./gradlew assembleDebug
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
