@@ -19,9 +19,14 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      
+    - name: Generate Gradle Wrapper
+      run: |
+        # 安装Gradle并生成wrapper
+        wget https://services.gradle.org/distributions/gradle-8.5-bin.zip
+        unzip gradle-8.5-bin.zip
+        ./gradle-8.5/bin/gradle wrapper --gradle-version 8.5
+        chmod +x gradlew
+        
     - name: Build with Gradle
       run: ./gradlew assembleDebug
       
