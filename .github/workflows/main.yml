@@ -19,14 +19,81 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         
-    - name: Generate Gradle Wrapper
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Fix Gradle Files
       run: |
-        # 安装Gradle并生成wrapper
-        wget https://services.gradle.org/distributions/gradle-8.5-bin.zip
-        unzip gradle-8.5-bin.zip
-        ./gradle-8.5/bin/gradle wrapper --gradle-version 8.5
-        chmod +x gradlew
+        # 修复根目录build.gradle
+        cat > build.gradle << 'EOF'
+        buildscript {
+            repositories {
+                google()
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.android.tools.build:gradle:8.1.0'
+                classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21'
+            }
+        }
         
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        
+        task clean(type: Delete) {
+            delete rootProject.buildDir
+        }
+        EOF
+        
+        # 修复app/build.gradle
+        cat > app/build.gradle << 'EOF'
+        plugins {
+            id 'com.android.application'
+            id 'org.jetbrains.kotlin.android'
+        }
+        
+        android {
+            namespace 'com.example.chianiuprinter'
+            compileSdk 33
+        
+            defaultConfig {
+                applicationId "com.example.chianiuprinter"
+                minSdk 26
+                targetSdk 33
+                versionCode 1
+                versionName "1.0"
+            }
+        
+            buildTypes {
+                release {
+                    minifyEnabled false
+                    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                }
+            }
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_1_8
+                targetCompatibility JavaVersion.VERSION_1_8
+            }
+            kotlinOptions {
+                jvmTarget = '1.8'
+            }
+        }
+        
+        dependencies {
+            implementation 'androidx.core:core-ktx:1.10.1'
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+            implementation 'com.google.android.material:material:1.9.0'
+            implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+        }
+        EOF
+        
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      
     - name: Build with Gradle
       run: ./gradlew assembleDebug
       
