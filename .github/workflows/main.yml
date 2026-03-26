@@ -22,22 +22,19 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Create Working Project
+    - name: Create Perfect Project
       run: |
         # 1. 创建项目结构
         mkdir -p app/src/main/java/com/example/chianiuprinter
         mkdir -p app/src/main/res
         
-        # 2. 创建settings.gradle（关键！）
+        # 2. 创建settings.gradle
         cat > settings.gradle << 'EOF'
         pluginManagement {
             repositories {
                 google()
                 mavenCentral()
                 gradlePluginPortal()
-            }
-            plugins {
-                id 'com.android.application' version '8.1.0'
             }
         }
         
@@ -53,13 +50,11 @@ jobs:
         include ':app'
         EOF
         
-        # 3. 创建app/build.gradle（带版本号）
+        # 3. 创建app/build.gradle（现代语法）
         cat > app/build.gradle << 'EOF'
         plugins {
-            id 'com.android.application' version '8.1.0' apply false
+            id 'com.android.application'
         }
-        
-        apply plugin: 'com.android.application'
         
         android {
             namespace 'com.example.chianiuprinter'
@@ -79,6 +74,11 @@ jobs:
                     proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                 }
             }
+            
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
         }
         
         dependencies {
@@ -87,7 +87,31 @@ jobs:
         }
         EOF
         
-        # 4. 创建AndroidManifest.xml
+        # 4. 创建build.gradle（根目录）
+        cat > build.gradle << 'EOF'
+        buildscript {
+            repositories {
+                google()
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.android.tools.build:gradle:8.1.0'
+            }
+        }
+        
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        
+        task clean(type: Delete) {
+            delete rootProject.buildDir
+        }
+        EOF
+        
+        # 5. 创建AndroidManifest.xml
         cat > app/src/main/AndroidManifest.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -110,7 +134,7 @@ jobs:
         </manifest>
         EOF
         
-        # 5. 创建MainActivity
+        # 6. 创建MainActivity
         cat > app/src/main/java/com/example/chianiuprinter/MainActivity.kt << 'EOF'
         package com.example.chianiuprinter
         
@@ -124,7 +148,7 @@ jobs:
         }
         EOF
         
-        # 6. 创建gradle wrapper
+        # 7. 创建gradle wrapper
         mkdir -p gradle/wrapper
         cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
         distributionBase=GRADLE_USER_HOME
@@ -140,8 +164,8 @@ jobs:
       
     - name: Build APK
       run: |
-        # 使用系统gradle（最简单）
-        gradle :app:assembleDebug
+        # 使用gradlew构建，忽略警告
+        ./gradlew :app:assembleDebug --warning-mode none
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
