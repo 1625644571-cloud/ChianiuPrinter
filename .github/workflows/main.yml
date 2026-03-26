@@ -22,42 +22,29 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Create Perfect Project
+    - name: Create Minimal Project
       run: |
-        # 1. 创建项目结构
+        # 1. 创建绝对最简单的项目
         mkdir -p app/src/main/java/com/example/chianiuprinter
-        mkdir -p app/src/main/res
         
-        # 2. 创建settings.gradle
+        # 2. 创建最简单的build.gradle（根目录）
+        cat > build.gradle << 'EOF'
+        // 空文件
+        EOF
+        
+        # 3. 创建最简单的settings.gradle
         cat > settings.gradle << 'EOF'
-        pluginManagement {
-            repositories {
-                google()
-                mavenCentral()
-                gradlePluginPortal()
-            }
-        }
-        
-        dependencyResolutionManagement {
-            repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-        
         rootProject.name = "ChianiuPrinter"
         include ':app'
         EOF
         
-        # 3. 创建app/build.gradle（现代语法）
+        # 4. 创建最简单的app/build.gradle
         cat > app/build.gradle << 'EOF'
         plugins {
             id 'com.android.application'
         }
         
         android {
-            namespace 'com.example.chianiuprinter'
             compileSdk 33
         
             defaultConfig {
@@ -71,101 +58,46 @@ jobs:
             buildTypes {
                 release {
                     minifyEnabled false
-                    proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                 }
-            }
-            
-            compileOptions {
-                sourceCompatibility JavaVersion.VERSION_17
-                targetCompatibility JavaVersion.VERSION_17
             }
         }
         
         dependencies {
-            implementation 'androidx.core:core-ktx:1.10.1'
-            implementation 'androidx.appcompat:appcompat:1.6.1'
+            // 空依赖
         }
         EOF
         
-        # 4. 创建build.gradle（根目录）
-        cat > build.gradle << 'EOF'
-        buildscript {
-            repositories {
-                google()
-                mavenCentral()
-            }
-            dependencies {
-                classpath 'com.android.tools.build:gradle:8.1.0'
-            }
-        }
-        
-        allprojects {
-            repositories {
-                google()
-                mavenCentral()
-            }
-        }
-        
-        task clean(type: Delete) {
-            delete rootProject.buildDir
-        }
-        EOF
-        
-        # 5. 创建AndroidManifest.xml
+        # 5. 创建最简单的AndroidManifest.xml
         cat > app/src/main/AndroidManifest.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-            <uses-permission android:name="android.permission.BLUETOOTH" />
-            
-            <application
-                android:allowBackup="true"
-                android:label="牵牛花打印助手">
-                
-                <activity
-                    android:name=".MainActivity"
-                    android:exported="true">
+            <application>
+                <activity android:name=".MainActivity">
                     <intent-filter>
                         <action android:name="android.intent.action.MAIN" />
                         <category android:name="android.intent.category.LAUNCHER" />
                     </intent-filter>
                 </activity>
-                
             </application>
         </manifest>
         EOF
         
-        # 6. 创建MainActivity
-        cat > app/src/main/java/com/example/chianiuprinter/MainActivity.kt << 'EOF'
-        package com.example.chianiuprinter
+        # 6. 创建最简单的MainActivity
+        cat > app/src/main/java/com/example/chianiuprinter/MainActivity.java << 'EOF'
+        package com.example.chianiuprinter;
         
-        import android.os.Bundle
-        import androidx.appcompat.app.AppCompatActivity
+        import android.app.Activity;
         
-        class MainActivity : AppCompatActivity() {
-            override fun onCreate(savedInstanceState: Bundle?) {
-                super.onCreate(savedInstanceState)
-            }
+        public class MainActivity extends Activity {
         }
         EOF
-        
-        # 7. 创建gradle wrapper
-        mkdir -p gradle/wrapper
-        cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
-        distributionBase=GRADLE_USER_HOME
-        distributionPath=wrapper/dists
-        distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
-        zipStoreBase=GRADLE_USER_HOME
-        zipStorePath=wrapper/dists
-        EOF
-        
-        echo "#!/bin/bash" > gradlew
-        echo 'gradle "$@"' >> gradlew
-        chmod +x gradlew
       
-    - name: Build APK
+    - name: Build APK with Gradle 7.6
       run: |
-        # 使用gradlew构建，忽略警告
-        ./gradlew :app:assembleDebug --warning-mode none
+        # 使用特定版本的gradle
+        wget https://services.gradle.org/distributions/gradle-7.6-bin.zip
+        unzip gradle-7.6-bin.zip
+        ./gradle-7.6/bin/gradle :app:assembleDebug
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
